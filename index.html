@@ -750,7 +750,7 @@ if(/[?&]dbg=1/.test(location.search)){let lt=Date.now(),mx=0,pd=0;setInterval(()
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="visible")return;if(Date.now()-ntTry>10*60e3)loadAlerts();if(Date.now()-rvTry>10*60e3)loadRivers();if(Date.now()-wxAt>15*60e3&&!wxBusy)loadWx()});
 </script>
 <script>
-(()=>{const GC="";if(!GC)return;const s=document.createElement("script");s.async=true;s.src="https://gc.zgo.at/count.js";s.setAttribute("data-goatcounter","https://"+GC+".goatcounter.com/count");s.setAttribute("data-goatcounter-settings",'{"no_onload":false}');document.head.appendChild(s)})();
+(()=>{const GC="biwafishing";if(!GC)return;const s=document.createElement("script");s.async=true;s.src="https://gc.zgo.at/count.js";s.setAttribute("data-goatcounter","https://"+GC+".goatcounter.com/count");s.setAttribute("data-goatcounter-settings",'{"no_onload":false}');document.head.appendChild(s)})();
 </script>
 </body>
 </html>
