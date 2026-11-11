@@ -1,0 +1,37 @@
+name: stats
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "何日分を集計するか"
+        default: "7"
+permissions:
+  contents: read
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GoatCounter 集計(ログに表示するだけ・保存しない)
+        env:
+          GC_TOKEN: ${{ secrets.GOATCOUNTER_TOKEN }}
+          DAYS: ${{ github.event.inputs.days }}
+        run: |
+          python3 - <<'PY'
+          import os, json, urllib.request, datetime
+          base = "https://biwafishing.goatcounter.com/api/v0"
+          days = int(os.environ.get("DAYS") or 7)
+          end = datetime.datetime.utcnow()
+          start = end - datetime.timedelta(days=days)
+          q = "?start=%s&end=%s" % (start.strftime("%Y-%m-%dT00:00:00Z"), end.strftime("%Y-%m-%dT%H:%M:%SZ"))
+          def get(p):
+              r = urllib.request.Request(base + p + q, headers={"Authorization": "Bearer " + os.environ["GC_TOKEN"], "Content-Type": "application/json"})
+              return json.load(urllib.request.urlopen(r))
+          print("== 期間: 直近%d日 ==" % days)
+          print("== total =="); print(json.dumps(get("/stats/total"), ensure_ascii=False))
+          print("== ページ別/タブ別 ==")
+          for h in get("/stats/hits?limit=50").get("hits", []):
+              print(h.get("count"), h.get("path"), h.get("title",""))
+          print("== 参照元 ==")
+          for h in get("/stats/toprefs?limit=20").get("stats", []):
+              print(h.get("count"), h.get("name"))
+          PY
