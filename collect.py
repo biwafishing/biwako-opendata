@@ -322,7 +322,7 @@ def collect_alerts():
 
 
 # ---- スマホへの通知(ntfy)。GitHub の Secrets に NTFY_TOPIC を入れると有効になる ----
-APP_URL = "https://suzuhaya5666-lgtm.github.io/Biwakodate/"
+APP_URL = "https://biwafishing.github.io/biwako-opendata/"
 N_STATE = Path("data/notified.json")
 N_ADV = {"10", "12", "14", "15", "18"}  # 通知する注意報: 大雨・大雪・雷・強風・洪水
 N_AREAS = ["大津市", "草津市", "守山市", "野洲市", "近江八幡市", "東近江市", "彦根市", "米原市",
