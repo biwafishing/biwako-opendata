@@ -14,10 +14,16 @@ jobs:
         with:
           python-version: "3.12"
       - run: python collect.py
+      - name: SNS共有カード(share.html / share.png)を更新
+        continue-on-error: true
+        run: |
+          fc-list | grep -qi "noto sans cjk" || (sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk)
+          pip install -q pillow
+          python tools/make_share.py
       - run: |
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
-          git add data
+          git add data share.html share.png
           if ! git diff --cached --quiet; then
             git commit -m "update data"
             git push
