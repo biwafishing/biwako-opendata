@@ -688,7 +688,7 @@ function rvChart(){const el=$("#rvc");if(!el)return;
 }
 function rvCard(){if(rvD===null)return`<div class="card"><b>流入河川の水位</b><p class="note">読み込み中…</p></div>`;
  const SL=["平常","水防団待機水位を超過","氾濫注意水位を超過","避難判断水位を超過","氾濫危険水位を超過"],CL=["#2a8a5a","#b87a00","#d97a00","#d33","#d33"],sg=v=>v==null?"–":(v>=0.005?"↑+":v<=-0.005?"↓":"→")+Math.abs(v).toFixed(2)+"m";
-  const I=rvInfo(),det=r=>{if(r.none)return`<div style="margin:8px 0"><b>${esc(r.d)}</b> <span class="note">データがまだありません</span></div>`;
+  const I=rvInfo(),det=r=>{if(r.none)return`<div style="margin:8px 0"><b>${esc(r.d)}</b> <span class="note">いま観測値がありません(観測所の欠測・休止中)</span></div>`;
   const th=r.t.length>1,nx=th&&r.st<2?`氾濫注意水位まであと${(r.t[1]-r.L.v).toFixed(2)}m`:"";
   return`<div style="margin:10px 0;padding-top:8px;border-top:1px solid #0001"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><b>${esc(r.d)}</b><span style="font-size:20px;font-weight:bold">${r.L.v.toFixed(2)}m</span><span style="color:${CL[r.st]};font-weight:bold">${SL[r.st]}</span></div><div class="note">1時間 ${sg(r.d1)}・3時間 ${sg(r.d3)}・24時間の最高 ${r.mx.toFixed(2)}m<br>${rvState(r)?"【"+rvState(r)+"】3日間の最低から"+(r.up>=0?"+":"")+r.up.toFixed(2)+"m・":""}${nx?nx+"・":""}${th?"注意 "+r.t[1]+"m"+(r.t[3]!=null?" / 危険 "+r.t[3]+"m":""):"基準水位なし"}(${esc(r.L.t.slice(5,16).replace("T"," "))}時点)</div></div>`};
   const hot=I.filter(r=>!r.none&&(r.st>=1||rvRising(r))),rest=I.filter(r=>!hot.includes(r)),line=r=>r.none?`<div class="note">${esc(r.d)}: データなし</div>`:`<div style="display:flex;gap:8px;padding:2px 0"><span>${esc(r.d)}</span><b style="margin-left:auto">${r.L.v.toFixed(2)}m</b><span class="note" style="min-width:3.2em;text-align:right">${sg(r.d3)}</span></div>`;
