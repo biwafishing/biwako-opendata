@@ -20,18 +20,18 @@ jobs:
           import os, json, urllib.request, datetime
           base = "https://biwafishing.goatcounter.com/api/v0"
           days = int(os.environ.get("DAYS") or 7)
-          end = datetime.datetime.utcnow()
+          end = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
           start = end - datetime.timedelta(days=days)
           q = "?start=%s&end=%s" % (start.strftime("%Y-%m-%dT00:00:00Z"), end.strftime("%Y-%m-%dT%H:%M:%SZ"))
           def get(p):
-              r = urllib.request.Request(base + p + q, headers={"Authorization": "Bearer " + os.environ["GC_TOKEN"], "Content-Type": "application/json"})
+              sep = "&" if "?" in p else "?"
+              r = urllib.request.Request(base + p + sep + q[1:], headers={"Authorization": "Bearer " + os.environ["GC_TOKEN"], "Content-Type": "application/json"})
               try:
                   return json.load(urllib.request.urlopen(r))
               except urllib.error.HTTPError as e:
                   print("HTTP", e.code, p, e.read()[:300].decode("utf-8","replace"))
                   return {}
           print("== 期間: 直近%d日 ==" % days)
-          print("== me =="); print(json.dumps(get("/me"), ensure_ascii=False)[:200])
           print("== total =="); print(json.dumps(get("/stats/total"), ensure_ascii=False))
           print("== ページ別/タブ別 ==")
           for h in get("/stats/hits?limit=50").get("hits", []):
