@@ -1,11 +1,12 @@
 """SNSカード用の share.html / share.png を最新データから作る。"""
-import csv, glob, html, os, sys
+import csv, glob, html, math, os, re, sys
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = "https://biwafishing.github.io/biwako-opendata/"
 TEMPS = [("雄琴沖", "雄琴沖"), ("安曇川沖", "安曇川沖"), ("唐橋(瀬田川)", "瀬田川")]
+PINS = {"海津大崎": "海津大崎", "安曇川": "安曇川", "彦根": "彦根", "沖島": "沖島", "琵琶湖大橋": "琵琶湖大橋", "プリンスホテル前": "プリンスホテル前"}
 
 def latest():
     last = {}
@@ -39,27 +40,68 @@ def main():
     desc = " / ".join(parts) or "琵琶湖の水温・水位・天気を自動収集"
 
     W, H = 1200, 630
-    im = Image.new("RGB", (W, H), "#fff3e0")
+    im = Image.new("RGB", (W, H))
     g = ImageDraw.Draw(im)
     for y in range(H):  # 夕焼けグラデーション
         t = y / H
-        c = (int(255 - 40 * t), int(170 - 60 * t), int(90 + 30 * t))
-        g.line([(0, y), (W, y)], fill=c)
-    g.text((60, 40), "琵琶湖観測データ", font=font(54), fill="white")
-    g.text((60, 110), "%s %s 現在" % (md, hhmm), font=font(36, False), fill="white")
-    y = 190
-    g.rounded_rectangle([40, y, W - 40, H - 40], 28, fill=(255, 255, 255))
-    if temps:
-        g.text((80, y + 30), "水温", font=font(40, False), fill="#7a4a2a")
-        step = (W - 160) // max(len(temps), 1)
-        for i, (lab, t) in enumerate(temps):
-            x = 80 + i * step
-            g.text((x, y + 95), "%.1f" % t[1], font=font(110), fill="#c2410c")
-            g.text((x + 235 if t[1] >= 10 else x + 235, y + 160), "℃", font=font(44), fill="#c2410c")
-            g.text((x, y + 235), lab, font=font(36, False), fill="#7a4a2a")
+        g.line([(0, y), (W, y)], fill=(int(255 - 40 * t), int(170 - 60 * t), int(90 + 30 * t)))
+    g.rounded_rectangle([30, 30, W - 30, H - 30], 28, fill="white")
+
+    # --- 左: 琵琶湖マップ(代表6地点の風) ---
+    try:
+        src = (ROOT / "index.html").read_text(encoding="utf-8")
+        LAKE = eval(re.search(r"const LAKE=(\[\[.*?\]\]);", src).group(1))
+        WXP = eval(re.search(r"const WXP=(\[\[.*?\]\]);", src).group(1))
+        wx = {}
+        with (ROOT / "data/weather_hourly_2026.csv").open(encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r["wind"] != "" and r["dir"] != "":
+                    wx[r["place"]] = r
+        sc = 0.76; ox, oy = 175, 50
+        P = lambda x, y: (ox + x * sc, oy + y * sc)
+        g.polygon([P(*p) for p in LAKE], fill=(214, 232, 248), outline=(120, 160, 200))
+        col = lambda v: (229, 83, 61) if v >= 6 else (242, 153, 74) if v >= 4 else (60, 140, 90)
+        fp = font(24)
+        for name, lat, lon, side, x, y in WXP:
+            if name not in PINS or name not in wx:
+                continue
+            v = float(wx[name]["wind"]); d = float(wx[name]["dir"])
+            cx, cy = P(x, y)
+            a = math.radians(d + 180)  # 風が吹いていく向き
+            dx, dy = math.sin(a), -math.cos(a)
+            L = 20
+            tip = (cx + dx * L, cy + dy * L); tail = (cx - dx * L, cy - dy * L)
+            c = col(v)
+            g.line([tail, tip], fill=c, width=7)
+            px, py = -dy, dx
+            g.polygon([tip, (tip[0] - dx * 15 + px * 10, tip[1] - dy * 15 + py * 10),
+                       (tip[0] - dx * 15 - px * 10, tip[1] - dy * 15 - py * 10)], fill=c)
+            lab = "%s %.1f" % (PINS[name], v)
+            w = g.textlength(lab, font=fp)
+            tx = cx + 30 if side == "r" else cx - 30 - w
+            g.text((tx, cy - 15), lab, font=fp, fill="#333")
+        # 色分けの凡例(地図の下に小さく)
+        fl = font(20, False); lx = 175; ly = H - 30 - 52
+        for txt, c in (("風 ~4m/s", (60, 140, 90)), ("4m/s~", (242, 153, 74)), ("6m/s~", (229, 83, 61))):
+            g.ellipse([lx, ly + 5, lx + 16, ly + 21], fill=c)
+            g.text((lx + 22, ly), txt, font=fl, fill="#7a4a2a")
+            lx += 22 + g.textlength(txt, font=fl) + 22
+    except Exception as e:
+        print("map skipped:", e, file=sys.stderr)
+
+    # --- 右: 水温(全観測地点)と水位 ---
+    x0 = 700
+    g.text((x0, 55), "琵琶湖観測データ", font=font(46), fill="#c2410c")
+    g.text((x0, 118), "%s %s 現在" % (md, hhmm), font=font(30, False), fill="#7a4a2a")
+    g.text((x0, 185), "水温", font=font(30, False), fill="#7a4a2a")
+    y = 215
+    for lab, t in temps:
+        g.text((x0, y + 18), lab, font=font(32, False), fill="#7a4a2a")
+        g.text((x0 + 210, y), "%.1f" % t[1], font=font(76), fill="#c2410c")
+        g.text((x0 + 210 + g.textlength("%.1f" % t[1], font=font(76)) + 6, y + 36), "℃", font=font(36), fill="#c2410c")
+        y += 88
     if lv:
-        g.text((80, y + 310), "水位(琵琶湖平均)  %+.2f m" % lv[1], font=font(44), fill="#1e40af")
-    g.text((W - 40 - 380, H - 40 - 52), "biwafishing.github.io", font=font(26, False), fill="#9a7b5a")
+        g.text((x0, y + 12), "水位 %+.2f m" % lv[1], font=font(42), fill="#1e40af")
     im = im.quantize(colors=48, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     im.save(ROOT / "share.png", optimize=True)
 
