@@ -97,8 +97,8 @@ def main():
     y = 215
     for lab, t in temps:
         g.text((x0, y + 18), lab, font=font(32, False), fill="#7a4a2a")
-        g.text((x0 + 210, y), "%.1f" % t[1], font=font(76), fill="#c2410c")
-        g.text((x0 + 210 + g.textlength("%.1f" % t[1], font=font(76)) + 6, y + 36), "℃", font=font(36), fill="#c2410c")
+        g.text((x0 + 210, y), "%.1f" % t[1], font=font(76), fill="#0e7490")
+        g.text((x0 + 210 + g.textlength("%.1f" % t[1], font=font(76)) + 6, y + 36), "℃", font=font(36), fill="#0e7490")
         y += 88
     if lv:
         g.text((x0, y + 12), "水位 %+.2f m" % lv[1], font=font(42), fill="#1e40af")
