@@ -25,6 +25,17 @@ def font(size, bold=True):
             return ImageFont.truetype(p, size)
     return ImageFont.load_default()
 
+EMO = lambda c: "☀️" if c == 0 else "🌤" if c == 1 else "⛅" if c == 2 else "☁️" if c == 3 else "🌫" if c <= 48 else "🌦" if c <= 57 else "🌧" if c <= 67 else "🌨" if c <= 77 else "🌧" if c <= 82 else "🌨" if c <= 86 else "⛈"
+
+def emoji(im, ch, xy, size):
+    for p in glob.glob("/usr/share/fonts/**/NotoColorEmoji.ttf", recursive=True):
+        f = ImageFont.truetype(p, 109)
+        t = Image.new("RGBA", (136, 128), (0, 0, 0, 0))
+        ImageDraw.Draw(t).text((0, 0), ch, font=f, embedded_color=True)
+        t = t.resize((size, int(size * 128 / 136)))
+        im.paste(t, (int(xy[0]), int(xy[1])), t)
+        return
+
 def main():
     d = latest()
     lv = d.get(("琵琶湖(平均)", "level"))
@@ -76,10 +87,16 @@ def main():
             px, py = -dy, dx
             g.polygon([tip, (tip[0] - dx * 15 + px * 10, tip[1] - dy * 15 + py * 10),
                        (tip[0] - dx * 15 - px * 10, tip[1] - dy * 15 - py * 10)], fill=c)
-            lab = "%s %.1f" % (PINS[name], v)
-            w = g.textlength(lab, font=fp)
-            tx = cx + 30 if side == "r" else cx - 30 - w
-            g.text((tx, cy - 15), lab, font=fp, fill="#333")
+            pr = float(wx[name].get("precip") or 0)
+            l1 = "%s %.1fm/s" % (PINS[name], v)
+            l2 = "(%smm)" % (("%.1f" % pr) if pr else "0")
+            w1 = g.textlength(l1, font=fp)
+            w2 = 36 + g.textlength(l2, font=font(22))
+            wmax = max(w1, w2)
+            left = cx + 30 if side == "r" else cx - 30 - wmax
+            g.text((left, cy - 30), l1, font=fp, fill="#333")
+            emoji(im, EMO(int(wx[name]["code"])), (left, cy + 2), 30)
+            g.text((left + 36, cy + 4), l2, font=font(22), fill="#1e40af" if pr else "#7a6a5a")
         # 色分けの凡例(地図の下に小さく)
         fl = font(20, False); lx = 175; ly = H - 30 - 52
         for txt, c in (("風 ~4m/s", (60, 140, 90)), ("4m/s~", (242, 153, 74)), ("6m/s~", (229, 83, 61))):
