@@ -1,5 +1,6 @@
 """SNSカード用の share.html / share.png を最新データから作る。"""
-import csv, glob, html, math, os, re, sys
+import csv, glob, html, json, math, os, re, sys
+from datetime import date
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
@@ -17,6 +18,20 @@ def latest():
                 continue
             last[(r["place"], k)] = (r["time"], float(r[k]))
     return last
+
+def load_clim():
+    try:
+        src = (ROOT / "index.html").read_text(encoding="utf-8")
+        return json.loads(re.search(r"const CLIM=(\{.*?\});\n", src, re.S).group(1))["r10"]
+    except Exception as e:
+        print("clim skipped:", e, file=sys.stderr)
+        return {}
+
+def clim_at(c, when):  # サイトの climAt と同じ補間
+    mon, day = int(when[5:7]), int(when[8:10])
+    i = (date(2000, mon, day) - date(2000, 1, 1)).days
+    g = min(i / 5, 72.999); k = int(g); f = g - k
+    return c["m"][k] * (1 - f) + c["m"][k + 1] * f, c["s"][k] * (1 - f) + c["s"][k + 1] * f
 
 def font(size, bold=True):
     names = ["NotoSansCJK-Bold.ttc", "NotoSansCJK-Regular.ttc"] if bold else ["NotoSansCJK-Regular.ttc"]
@@ -39,12 +54,13 @@ def emoji(im, ch, xy, size):
 def main():
     d = latest()
     lv = d.get(("琵琶湖(平均)", "level"))
-    temps = [(lab, d[(p, "temp")]) for p, lab in TEMPS if (p, "temp") in d]
+    temps = [(lab, d[(p, "temp")], p) for p, lab in TEMPS if (p, "temp") in d]
+    CL = load_clim()
     when = max([v[0] for v in d.values()]) if d else ""
     hhmm = when[11:16]; md = "%d/%d" % (int(when[5:7]), int(when[8:10])) if when else ""
     parts = []
     if temps:
-        parts.append("水温 " + " ".join("%s%.1f℃" % (l, t[1]) for l, t in temps))
+        parts.append("水温 " + " ".join("%s%.1f℃" % (l, t[1]) for l, t, _p in temps))
     if lv:
         parts.append("水位 %+.2fm" % lv[1])
     title = "琵琶湖観測データ %s %s現在" % (md, hhmm)
@@ -112,13 +128,21 @@ def main():
     g.text((x0, 118), "%s %s 現在" % (md, hhmm), font=font(30, False), fill="#7a4a2a")
     g.text((x0, 185), "水温", font=font(30, False), fill="#7a4a2a")
     y = 215
-    for lab, t in temps:
+    for lab, t, pk in temps:
+        col = "#0e7490"
+        if pk in CL:
+            m_, s_ = clim_at(CL[pk], t[0])
+            dv = t[1] - m_
+            col = "#222222" if abs(dv) < s_ * 0.5 else ("#d1242f" if dv > 0 else "#1f6feb")
         g.text((x0, y + 18), lab, font=font(32, False), fill="#7a4a2a")
-        g.text((x0 + 210, y), "%.1f" % t[1], font=font(76), fill="#0e7490")
-        g.text((x0 + 210 + g.textlength("%.1f" % t[1], font=font(76)) + 6, y + 36), "℃", font=font(36), fill="#0e7490")
+        g.text((x0 + 210, y), "%.1f" % t[1], font=font(76), fill=col)
+        g.text((x0 + 210 + g.textlength("%.1f" % t[1], font=font(76)) + 6, y + 36), "℃", font=font(36), fill=col)
         y += 88
     if lv:
         g.text((x0, y + 12), "水位 %+.2f m" % lv[1], font=font(42), fill="#1e40af")
+    fn_ = font(20, False); nx = x0
+    for txt, c_ in (("水温は平年(直近10年)と比べて ", "#7a6a5a"), ("赤=高め ", "#d1242f"), ("青=低め", "#1f6feb")):
+        g.text((nx, y + 68), txt, font=fn_, fill=c_); nx += g.textlength(txt, font=fn_)
     im = im.quantize(colors=48, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     im.save(ROOT / "share.png", optimize=True)
 
