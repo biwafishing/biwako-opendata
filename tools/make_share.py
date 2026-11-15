@@ -87,7 +87,8 @@ def main():
         sc = 0.76; ox, oy = 175, 50
         P = lambda x, y: (ox + x * sc, oy + y * sc)
         g.polygon([P(*p) for p in LAKE], fill=(214, 232, 248), outline=(120, 160, 200))
-        col = lambda v: (229, 83, 61) if v >= 6 else (242, 153, 74) if v >= 4 else (60, 140, 90)
+        STEPS = [(0, (96, 112, 168)), (2, (46, 160, 84)), (4, (242, 153, 74)), (6, (229, 83, 61)), (8, (164, 22, 26))]
+        col = lambda v: [c for t, c in STEPS if v >= t][-1]
         fp = font(24)
         for name, lat, lon, side, x, y in WXP:
             if name not in PINS or name not in wx:
@@ -96,10 +97,11 @@ def main():
             cx, cy = P(x, y)
             a = math.radians(d + 180)  # 風が吹いていく向き
             dx, dy = math.sin(a), -math.cos(a)
-            L = 20
+            L = 18 + min(v, 10) * 0.8
             tip = (cx + dx * L, cy + dy * L); tail = (cx - dx * L, cy - dy * L)
             c = col(v)
-            g.line([tail, tip], fill=c, width=7)
+            lw = int(6 + min(v, 10) * 0.5)
+            g.line([tail, tip], fill=c, width=lw)
             px, py = -dy, dx
             g.polygon([tip, (tip[0] - dx * 15 + px * 10, tip[1] - dy * 15 + py * 10),
                        (tip[0] - dx * 15 - px * 10, tip[1] - dy * 15 - py * 10)], fill=c)
@@ -115,10 +117,11 @@ def main():
             g.text((left + 36, cy + 4), l2, font=font(22), fill="#1e40af" if pr else "#7a6a5a")
         # 色分けの凡例(地図の下に小さく)
         fl = font(20, False); lx = 175; ly = H - 30 - 52
-        for txt, c in (("風 ~4m/s", (60, 140, 90)), ("4m/s~", (242, 153, 74)), ("6m/s~", (229, 83, 61))):
+        g.text((lx, ly), "風", font=fl, fill="#7a4a2a"); lx += 30
+        for txt, c in (("~2", STEPS[0][1]), ("2~", STEPS[1][1]), ("4~", STEPS[2][1]), ("6~", STEPS[3][1]), ("8~m/s", STEPS[4][1])):
             g.ellipse([lx, ly + 5, lx + 16, ly + 21], fill=c)
             g.text((lx + 22, ly), txt, font=fl, fill="#7a4a2a")
-            lx += 22 + g.textlength(txt, font=fl) + 22
+            lx += 22 + g.textlength(txt, font=fl) + 14
     except Exception as e:
         print("map skipped:", e, file=sys.stderr)
 
@@ -143,7 +146,7 @@ def main():
     fn_ = font(20, False); nx = x0
     for txt, c_ in (("水温は平年(直近10年)と比べて ", "#7a6a5a"), ("赤=高め ", "#d1242f"), ("青=低め", "#1f6feb")):
         g.text((nx, y + 68), txt, font=fn_, fill=c_); nx += g.textlength(txt, font=fn_)
-    im = im.quantize(colors=48, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    im = im.quantize(colors=96, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     im.save(ROOT / "share.png", optimize=True)
 
     img = BASE + "share.png?v=" + when.replace("-", "").replace(":", "").replace("T", "")
