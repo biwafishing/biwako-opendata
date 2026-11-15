@@ -1,10 +1,10 @@
-"""過去30年(1991-2020)の同じ日・同じ時刻の平均気温(平年値の目安)を作り、data/temp_normals.json に保存する。
+"""直近15年(2011-2025)の同じ日・同じ時刻の平均気温(平年値の目安)を作り、data/temp_normals.json に保存する。
 基準は4地点(北湖北・北湖東・湖西中央・南湖)。出典: Open-Meteo Historical Weather API (ERA5 ほか)。"""
 import json, sys, time, urllib.request, urllib.parse
 from datetime import date
 
 REFS = [("北湖北", 35.4, 136.1), ("北湖東", 35.27, 136.27), ("湖西中央", 35.2, 135.97), ("南湖", 35.02, 135.88)]
-Y0, Y1 = 1991, 2020
+Y0, Y1 = 2011, 2025
 CH = 5  # 年ごとにまとめて取得
 
 def fetch(lat, lon, a, b):
