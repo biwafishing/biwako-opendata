@@ -526,8 +526,8 @@ function photoUI(t,sel,large){sel=sel||"#tph";const box=$(sel);if(!box)return;t.
  const st=large?"width:100%;border-radius:12px;margin:6px 0;background:#ccd;display:block;min-height:140px;object-fit:contain":"width:calc(33.3% - 6px);aspect-ratio:1;object-fit:cover;border-radius:8px;background:#ccd;margin:3px";
  box.innerHTML=`<div class="card" ${large&&n?'style="padding:8px"':""}>${large&&n?"":"<b>📷 写真</b> "}<span class="note">${gOK()?"Googleにログイン中":"未ログイン"}(${n}/${PHMAX}枚)</span>
  <div ${large?"":'style="display:flex;flex-wrap:wrap;margin:6px -3px"'}>${t.photos.map(id=>`<img data-ph="${esc(id)}" src="${thumbs[id]||"data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="}" style="${st}">`).join("")}</div>
- <div class="row"><button class="${gOK()?"":"pri"}" id="pa" ${n>=PHMAX&&gOK()?"disabled":""}>${gOK()?"＋ 写真を追加":"Googleにログイン"}</button></div>
- <input id="pf" type="file" accept="image/*" multiple hidden><div class="note" id="pm">${n?"写真を押すと全画面で見られます。":"写真はGoogleドライブの「琵琶湖釣行写真」フォルダに保存されます。"}</div></div>`;
+ <div class="row"><button class="${gOK()?"":"pri"}" id="pa" ${n>=PHMAX&&gOK()?"disabled":""}>${gOK()?"＋ 写真を追加":"Googleにログイン"}</button></div>${gOK()?"":'<div class="note">写真の保存にはGoogleログインが必要です(写真はあなたのドライブに保存され、運営には届きません)。</div>'}
+ <input id="pf" type="file" accept="image/*" multiple hidden><div class="note" id="pm">${n?"写真を押すと全画面で見られます。":"写真は、あなた自身のGoogleドライブの「琵琶湖釣行写真」フォルダに保存されます。運営には届かず、見ることもできません。"}</div></div>`;
  const msg=x=>{const m=$("#pm");if(m)m.textContent=x};
  if(!gReady())gLoad().catch(()=>{});
  $("#pa").onclick=()=>{if(!gOK()){gAuth().then(again,e=>msg(e.message));return}$("#pf").click()};
