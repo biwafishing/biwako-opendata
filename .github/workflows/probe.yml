@@ -8,14 +8,14 @@ jobs:
     steps:
       - run: |
           B="https://shiga-bousai.jp/sp"; Q="day=2026-11-22&time=22:50&id2=0&id3=0&id4=0&sid=0"
-          for p in "wl/wl_map01.php?$Q&id1=7" "ccwl/ccwl_list.php?$Q&id1=24"; do
-            echo "=== $p"; curl -sS -m 30 -A "Mozilla/5.0" -o /tmp/o.html -w "%{http_code} %{size_download}\n" "$B/$p"
-            python3 - <<'PY'
-          import re,html
+          curl -sS -m 30 -A "Mozilla/5.0" -o /tmp/o.html "$B/ccwl/ccwl_list.php?$Q&id1=24"
+          python3 - <<'PY'
+          import re
           s=open("/tmp/o.html",encoding="utf-8",errors="replace").read()
-          b=s[s.find("<body"):]
-          print(re.sub(r"\n\s*\n+","\n",re.sub(r"<[^>]+>"," ",re.sub(r"<script.*?</script>","",b,flags=re.S)))[:2500])
-          for h in re.findall(r'href="([^"]+)"',b)[:80]:
-              if "wl" in h or "ccwl" in h: print("LINK",h)
+          print("RAW-SAMPLE", re.sub(r"\s+"," ",s[s.find("際川"):][:900]))
+          t=re.sub(r"<[^>]+>","\t",s[s.find("際川")-300:])
+          rows=[x.strip() for x in re.split(r"\t+",t) if x.strip()]
+          print(len(rows)); print(" | ".join(rows)[:6000])
+          for u in re.findall(r"url\s*:\s*['\"]([^'\"]+)",s): print("AJAX",u)
+          for u in re.findall(r'href="([^"]*ccwl[^"]*)"',s)[:20]: print("LINK",u)
           PY
-          done
