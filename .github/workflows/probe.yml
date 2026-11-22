@@ -8,19 +8,13 @@ jobs:
     steps:
       - run: |
           B="https://shiga-bousai.jp/sp"; Q="day=2026-11-22&time=22:50&interval=60&id2=0&id3=0&id4=0&sid=0"
-          curl -sS -m 30 -A "Mozilla/5.0" -L -c /tmp/cj -o /tmp/top.html "$B/index.php" >/dev/null
-          curl -sS -m 30 -A "Mozilla/5.0" -L -b /tmp/cj -o /tmp/w.html -w "FINAL %{url_effective} %{http_code} %{size_download}\n" "$B/wl/wl_map01.php?$Q&id1=7"
-          python3 - <<'PY'
-          import re
-          s=open("/tmp/w.html",encoding="utf-8",errors="replace").read()
-          for h in sorted(set(re.findall(r'href="([^"]*wl[^"]*)"',s)))[:30]: print("LINK",h)
-          t=re.sub(r"<script.*?</script>","",s,flags=re.S);t=re.sub(r"<[^>]+>","\t",t)
-          print(" | ".join(x.strip() for x in re.split(r"\t+",t) if x.strip())[:1500])
-          PY
-          curl -sS -m 30 -A "Mozilla/5.0" -L -b /tmp/cj -o /tmp/l.html -w "FINAL2 %{url_effective} %{http_code} %{size_download}\n" "$B/wl/wl_list.php?$Q&id1=7"
+          curl -sS -m 30 -A "Mozilla/5.0" -L -c /tmp/cj -o /dev/null "$B/index.php"
+          curl -sS -m 30 -A "Mozilla/5.0" -L -b /tmp/cj -o /tmp/l.html -w "FINAL %{url_effective} %{http_code} %{size_download}\n" "$B/wl/wl_table.php?$Q&id1=7"
           python3 - <<'PY'
           import re
           s=open("/tmp/l.html",encoding="utf-8",errors="replace").read()
-          t=re.sub(r"<script.*?</script>","",s,flags=re.S);t=re.sub(r"<[^>]+>","\t",t)
-          print(" | ".join(x.strip() for x in re.split(r"\t+",t) if x.strip())[:3500])
+          i=s.find("<table")
+          t=re.sub(r"<script.*?</script>","",s[i:],flags=re.S);t=re.sub(r"<[^>]+>","\t",t)
+          print(" | ".join(x.strip() for x in re.split(r"\t+",t) if x.strip())[:7000])
+          for u in re.findall(r"url\s*:\s*['\"]([^'\"]+)",s): print("AJAX",u)
           PY
