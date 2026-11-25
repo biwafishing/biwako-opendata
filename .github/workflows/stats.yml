@@ -32,9 +32,19 @@ jobs:
                   print("HTTP", e.code, p, e.read()[:300].decode("utf-8","replace"))
                   return {}
           print("== 期間: 直近%d日 ==" % days)
-          print("== total =="); print(json.dumps(get("/stats/total"), ensure_ascii=False))
+          hits = get("/stats/hits?limit=50").get("hits", [])
+          print("== 日別(サイトを開いた数 / タブの切り替えを含む全体) ==")
+          days_open, days_all = {}, {}
+          for h in hits:
+              for st in h.get("stats", []) or []:
+                  d, n = st.get("day"), st.get("daily", 0) or 0
+                  days_all[d] = days_all.get(d, 0) + n
+                  if (h.get("path") or "").startswith("/biwako-opendata"):
+                      days_open[d] = days_open.get(d, 0) + n
+          for d in sorted(days_all):
+              print(d, days_open.get(d, 0), days_all[d])
           print("== ページ別/タブ別 ==")
-          for h in get("/stats/hits?limit=50").get("hits", []):
+          for h in hits:
               print(h.get("count"), h.get("path"), h.get("title",""))
           print("== 参照元 ==")
           for h in get("/stats/toprefs?limit=20").get("stats", []):
