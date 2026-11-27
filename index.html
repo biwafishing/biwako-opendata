@@ -79,7 +79,7 @@ textarea{width:100%;font:inherit;color:var(--tx);background:var(--card);border:1
 <footer class="note" style="margin:16px 0 8px;line-height:1.7">
 <b>このサイトについて</b><br>
 個人が趣味で作った非公式のサイトです。表示は目安で、正確性・即時性は保証しません。釣行・出船・河川への立ち入りなど、安全に関わる判断は、気象庁・国土交通省などの最新の公式情報で行ってください。<br>
-出典: 国土交通省「川の防災情報」(水位・水温)、国土交通省「水文水質データベース」(平年値)、気象庁(警報・注意報、高解像度降水ナウキャスト=雨雲)、<a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>(天気・風)、国土地理院(タップした場所の地名)。潮名は月齢からの計算値です。<br>
+出典: 国土交通省「川の防災情報」(水位・水温)、国土交通省「水文水質データベース」(平年値)、国土交通省 近畿地方整備局 琵琶湖河川事務所(瀬田川洗堰の放流量)、気象庁(警報・注意報、高解像度降水ナウキャスト=雨雲)、<a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>(天気・風)、国土地理院(タップした場所の地名)。潮名は月齢からの計算値です。<br>
 アクセス状況を把握するため、個人を特定しない形でアクセス解析を使っています。<br>
 公式X: <a href="https://x.com/biwa_fishing" target="_blank" rel="noopener">@biwa_fishing</a>(ご意見・ご要望はこちらへ) ／ <a href="privacy.html">プライバシーについて</a>
 </footer>
@@ -97,7 +97,7 @@ function lclimAt(ts,bb){const b=bb||view.base,c=LCLIM[b==="off"?"r10":b];if(!c)r
 const climM=(m,p,ts,bb)=>m==="level"?lclimAt(ts,bb):climAt(p,ts,bb);
 const SYN=29.530588853,$=s=>document.querySelector(s);
 const MOONS=["🌑","🌒","🌓","🌔","🌕","🌖","🌗","🌘"];
-const LAB={temp:"水温(℃)",level:"水位(m)"};
+const LAB={temp:"水温(℃)",flow:"放流量(m³/s)",level:"水位(m)"};
 const COL=["#1f6feb","#d1242f","#1a7f37","#9a6700","#8250df","#0a7ea4"];
 const TABS=[["wx","マップ"],["now","現在"],["chart","グラフ"],["cal","カレンダー"],["trip","釣行"],["nt","お知らせ"]];
 const pad=n=>String(n).padStart(2,"0");
@@ -804,7 +804,7 @@ function trip(){
    rows+=`<tr class="${on?"hl":""}"><td>${md(d)}${on?" 釣行":""}</td><td>${tideOf(d)}</td><td>${g.code==null?"–":WXE(g.code)+" "+WXN(g.code)}</td><td class="n">${g.precip==null?"–":f1(g.precip)+"mm"}</td><td>${g.dir==null?"–":arrow(g.dir)+" "+dirN(g.dir)}</td><td class="n">${f1(g.wmax)}</td><td class="n">${g.tmin==null?"–":Math.round(g.tmin)+"〜"+Math.round(g.tmax)+"℃"}</td><td class="n">${lv==null?"–":lv.toFixed(2)}</td><td class="n">${fl==null?"–":fl.toFixed(0)}</td></tr>`}
   el.innerHTML=head+`<div class="card scroll"><b>天気(5日前〜釣行後2日)</b><div class="row" style="margin:6px 0">${pls.map(p=>`<button class="pl ${p===tripPl?"pri":""}" data-p="${esc(p)}">${esc(p)}</button>`).join("")}</div>
   <table><tr><th>日付</th><th>潮</th><th>天気</th><th class="n">雨量</th><th>風向</th><th class="n">最大風速</th><th class="n">気温</th><th class="n">水位</th><th class="n">放流量</th></tr>${rows}</table>
-  <p class="note">雨量は1日の合計(mm)、風速はm/s、水位は琵琶湖の1日の平均(m)、放流量は手入力の値(m³/s)です。データがない日は「–」です。${wxD||Object.keys(wxHr).length?"":" 天気を読み込み中…"}</p></div>
+  <p class="note">雨量は1日の合計(mm)、風速はm/s、水位は琵琶湖の1日の平均(m)、放流量は瀬田川洗堰の値(m³/s。琵琶湖河川事務所が毎朝6時ごろ更新)です。データがない日は「–」です。${wxD||Object.keys(wxHr).length?"":" 天気を読み込み中…"}</p></div>
   <div id="tchart"></div>`;
   bind();
   el.querySelectorAll("button[data-p]").forEach(b=>b.onclick=()=>{tripPl=b.dataset.p;trip()});
