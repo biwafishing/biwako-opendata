@@ -20,7 +20,7 @@ jobs:
           import os, json, urllib.request, datetime
           base = "https://biwafishing.goatcounter.com/api/v0"
           days = int(os.environ.get("DAYS") or 7)
-          end = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+          end = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + datetime.timedelta(days=1)  # 今日の分も日別に入れる
           start = end - datetime.timedelta(days=days)
           q = "?start=%s&end=%s" % (start.strftime("%Y-%m-%dT00:00:00Z"), end.strftime("%Y-%m-%dT%H:%M:%SZ"))
           def get(p):
